@@ -1,63 +1,51 @@
 export default async function handler(req, res) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Only POST allowed" });
-  }
-
   const targetUrl = "https://script.google.com/macros/s/AKfycby6qB2Mi9WFjgHC2rGV8m33ncQyT5npfseuUlKR1vqliPt3DrFCcP_8tsD7Q5slIS7ZJA/exec";
 
+  if (req.method === "GET") {
+    // Simple ping for diagnostics
+    return res.status(200).json({ success: true, message: "Proxy is alive!" });
+  }
+
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Only POST and GET methods are allowed" });
+  }
+
   try {
-    const payload = req.body;
-    console.log("🟡 Incoming payload:", JSON.stringify(req.body, null, 2));
-    const resultsArray = [];
+    const incoming = req.body;
+    console.log("🟡 Incoming payload:", JSON.stringify(incoming, null, 2));
 
-    let workouts = [];
+    const wrappedPayload = {
+      results: [
+        {
+          entry: incoming,
+          response: "{\"success\":true}"
+        }
+      ],
+      success: 1
+    };
 
-    // Case 1: Auto Export format with results array
-    if (payload.results && Array.isArray(payload.results)) {
-      for (const wrapper of payload.results) {
-        const nestedWorkouts = wrapper?.entry?.data?.workouts || [];
-        workouts.push(...nestedWorkouts);
-      }
-    }
+    console.log("📦 Wrapped payload:", JSON.stringify(wrappedPayload, null, 2));
 
-    // Case 2: Raw workouts array directly in body
-    else if (payload.workouts && Array.isArray(payload.workouts)) {
-      workouts = payload.workouts;
-    } else {
-      return res.status(400).json({ success: false, error: "Invalid data format: missing 'results' or 'workouts'" });
-    }
+    const forwardRes = await fetch(targetUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(wrappedPayload)
+    });
 
-    // Forward each workout
-    for (const [index, workout] of workouts.entries()) {
-      const transformed = {
-        date: workout.start || "",
-        type: "auto-export",
-        exercise: workout.name || "",
-        duration: parseFloat(workout.duration) || "",
-        distance: parseFloat(workout.distance?.qty) || "",
-        pace: "",
-        zone: "",
-        notes: "AutoExport sync",
-      };
+    const responseText = await forwardRes.text();
+    console.log("✅ Response from Google Apps Script:", responseText);
 
-      const forwardRes = await fetch(targetUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(transformed),
-      });
+    res.status(200).json({
+      success: true,
+      forwarded: true,
+      rawResponse: responseText
+    });
 
-      const resultText = await forwardRes.text();
-      console.log(`✅ Forwarded workout ${index + 1}: ${resultText}`);
-
-      resultsArray.push({
-        entry: transformed,
-        response: resultText,
-      });
-    }
-
-    return res.status(200).json({ success: true, results: resultsArray });
   } catch (err) {
     console.error("❌ Proxy error:", err);
-    return res.status(500).json({ success: false, error: err.message });
+    res.status(500).json({
+      success: false,
+      error: err.message
+    });
   }
 }
