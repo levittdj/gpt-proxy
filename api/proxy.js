@@ -2,22 +2,22 @@ export default async function handler(req, res) {
   const targetUrl =
     "https://script.google.com/macros/s/AKfycby6qB2Mi9WFjgHC2rGV8m33ncQyT5npfseuUlKR1vqliPt3DrFCcP_8tsD7Q5slIS7ZJA/exec";
 
+  // 📅 Safe date parser for "YYYY-MM-DD HH:mm:ss ±hhmm"
   function parseDate(raw) {
     try {
-      // Converts "2025-06-28 16:14:13 -0400" => "2025-06-28T16:14:13-04:00"
       const match = raw.match(/^(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}) ([+-]\d{4})$/);
       if (!match) return "";
-
       const [_, date, time, offset] = match;
-      const offsetFormatted = `${offset.slice(0, 3)}:${offset.slice(3)}`; // -0400 → -04:00
-      const isoString = `${date}T${time}${offsetFormatted}`;
-      const d = new Date(isoString);
+      const formattedOffset = `${offset.slice(0, 3)}:${offset.slice(3)}`; // "-0400" → "-04:00"
+      const iso = `${date}T${time}${formattedOffset}`;
+      const d = new Date(iso);
       return isNaN(d) ? "" : d.toISOString().split("T")[0];
     } catch {
       return "";
     }
   }
 
+  // 🔹 GET — Retrieve sheet data
   if (req.method === "GET") {
     try {
       const response = await fetch(targetUrl);
@@ -28,11 +28,13 @@ export default async function handler(req, res) {
     }
   }
 
+  // 🔹 POST — Send workouts to sheet
   if (req.method === "POST") {
     try {
       const body = req.body;
       let workouts = null;
 
+      // 🧠 Detect input shape
       if (body?.results?.[0]?.entry?.data?.workouts) {
         workouts = body.results[0].entry.data.workouts;
       } else if (body?.data?.workouts) {
@@ -50,12 +52,7 @@ export default async function handler(req, res) {
         workouts.map(async (w, i) => {
           const formatted = {
             date: w.start ? parseDate(w.start) : "",
-            type:
-              w.name?.toLowerCase().includes("run") ||
-              w.name?.toLowerCase().includes("ride") ||
-              w.name?.toLowerCase().includes("cycling")
-                ? "cardio"
-                : "strength",
+            type: "cardio", // optional: replace with custom logic if needed
             exercise: w.name || "",
             sets: "",
             reps: "",
@@ -108,4 +105,3 @@ export default async function handler(req, res) {
 
   return res.status(405).json({ error: "Method not allowed" });
 }
-
