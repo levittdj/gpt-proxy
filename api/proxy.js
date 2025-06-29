@@ -19,21 +19,18 @@ export default async function handler(req, res) {
   try {
     const incoming = req.body;
 
-    // Pull workouts array from either wrapped or unwrapped format
     const workouts = incoming?.data?.workouts || incoming?.results?.[0]?.entry?.data?.workouts || [];
 
-    // Add 'date' from 'start' if missing
+    // Parse "start" manually to get yyyy-mm-dd reliably
+    const parseDate = (rawStart) => {
+      if (!rawStart) return "";
+      const parts = rawStart.split(" ")[0]; // Get "YYYY-MM-DD"
+      return /^\d{4}-\d{2}-\d{2}$/.test(parts) ? parts : "";
+    };
+
     workouts.forEach((w) => {
       if (!w.date && w.start) {
-        try {
-          const cleaned = w.start.replace(/ -\d{4}$/, "Z");
-          const d = new Date(cleaned);
-          if (!isNaN(d)) {
-            w.date = d.toISOString().split("T")[0];
-          }
-        } catch (e) {
-          console.warn("⚠️ Failed to parse date for:", w.start);
-        }
+        w.date = parseDate(w.start);
       }
     });
 
