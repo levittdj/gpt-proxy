@@ -19,10 +19,34 @@ export default async function handler(req, res) {
   try {
     const incoming = req.body;
 
+    // Pull workouts array from either wrapped or unwrapped format
+    const workouts = incoming?.data?.workouts || incoming?.results?.[0]?.entry?.data?.workouts || [];
+
+    // Add 'date' from 'start' if missing
+    workouts.forEach((w) => {
+      if (!w.date && w.start) {
+        try {
+          const cleaned = w.start.replace(/ -\d{4}$/, "Z");
+          const d = new Date(cleaned);
+          if (!isNaN(d)) {
+            w.date = d.toISOString().split("T")[0];
+          }
+        } catch (e) {
+          console.warn("⚠️ Failed to parse date for:", w.start);
+        }
+      }
+    });
+
+    const updatedPayload = {
+      data: {
+        workouts
+      }
+    };
+
     const wrappedPayload = {
       results: [
         {
-          entry: incoming,
+          entry: updatedPayload,
           response: "{\"success\":true}"
         }
       ],
@@ -51,4 +75,3 @@ export default async function handler(req, res) {
     });
   }
 }
-
