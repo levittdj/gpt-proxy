@@ -38,7 +38,7 @@ export default async function handler(req, res) {
       const results = await Promise.all(
         workouts.map(async (w, i) => {
           const formatted = {
-            date: w.start || "",
+            date: w.start ? new Date(w.start).toISOString().split("T")[0] : "",
             type: "autoExport",
             exercise: w.name || "",
             sets: "",
