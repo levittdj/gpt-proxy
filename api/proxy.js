@@ -28,38 +28,51 @@ export default async function handler(req, res) {
       }
 
       const results = await Promise.all(
-        workouts.map(async (w, i) => {
-          const formatted = {
-            date: w.start || "",
-            type: "autoExport",
-            exercise: w.name || "",
-            sets: "",
-            reps: "",
-            weight: "",
-            duration: w.duration || "",
-            distance: w.distance?.qty || "",
-            pace: "",
-            zone: "",
-            notes: "Auto Export sync",
-          };
+  workouts.map(async (w, i) => {
+    const formatted = {
+      date: w.start || "",
+      type: "autoExport",
+      exercise: w.name || "",
+      sets: "",
+      reps: "",
+      weight: "",
+      duration: w.duration || "",
+      distance: w.distance?.qty || "",
+      pace: "",
+      zone: "",
+      notes: "Auto Export sync",
+    };
 
-          try {
-            const forwardRes = await fetch(targetUrl, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(formatted),
-            });
+    // Wrap inside 'results' array structure expected by the Apps Script
+    const wrappedPayload = {
+      results: [
+        {
+          entry: {
+            data: {
+              workouts: [formatted]
+            }
+          },
+          response: JSON.stringify({ success: true })
+        }
+      ],
+      success: 1
+    };
 
-            const text = await forwardRes.text();
-            console.log(`✅ Workout ${i + 1} forwarded:`, text);
+    try {
+      const forwardRes = await fetch(targetUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(wrappedPayload),
+      });
 
-            return { entry: formatted, response: text };
-          } catch (err) {
-            console.error(`❌ Error with workout ${i + 1}:`, err);
-            return { entry: formatted, error: err.toString() };
-          }
-        })
-      );
+      const text = await forwardRes.text();
+      return { entry: formatted, response: text };
+    } catch (err) {
+      return { entry: formatted, error: err.toString() };
+    }
+  })
+);
+
 
       return res.status(200).json({ success: true, forwarded: workouts.length, results });
     } catch (err) {
