@@ -7,11 +7,48 @@ export default async function handler(req, res) {
 
   try {
     const payload = req.body;
+    const resultsArray = [];
 
-    // Handle single object or batch array
+    // Detect if this is a batch from Auto Export
+    if (payload.results && Array.isArray(payload.results)) {
+      for (const [index, resultWrapper] of payload.results.entries()) {
+        const workouts = resultWrapper?.entry?.data?.workouts || [];
+
+        for (const workout of workouts) {
+          const transformedWorkout = {
+            date: workout.start || "",
+            type: "auto-export",
+            exercise: workout.name || "",
+            duration: parseFloat(workout.duration) || "",
+            distance: parseFloat(workout.distance?.qty) || "",
+            pace: "", // You could calculate pace later
+            zone: "",
+            notes: `AutoExport log`,
+          };
+
+          const forwardRes = await fetch(targetUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(transformedWorkout),
+          });
+
+          const resultText = await forwardRes.text();
+          console.log(`✅ AutoExport workout ${index + 1}: ${resultText}`);
+
+          resultsArray.push({
+            entry: transformedWorkout,
+            response: resultText,
+          });
+        }
+      }
+
+      return res.status(200).json({ success: true, results: resultsArray });
+    }
+
+    // Fallback: treat as single or batch object(s)
     const entries = Array.isArray(payload) ? payload : [payload];
 
-    const results = await Promise.all(
+    const manualResults = await Promise.all(
       entries.map(async (entry, index) => {
         try {
           const forwardRes = await fetch(targetUrl, {
@@ -21,14 +58,14 @@ export default async function handler(req, res) {
           });
 
           const resultText = await forwardRes.text();
-          console.log(`✅ Response for entry ${index + 1}:`, resultText);
+          console.log(`✅ Manual entry ${index + 1}:`, resultText);
 
           return {
             entry,
             response: resultText,
           };
         } catch (err) {
-          console.error(`❌ Error forwarding entry ${index + 1}:`, err);
+          console.error(`❌ Error forwarding manual entry ${index + 1}:`, err);
           return {
             entry,
             error: err.toString(),
@@ -37,13 +74,9 @@ export default async function handler(req, res) {
       })
     );
 
-    res.status(200).json({ success: true, results });
+    return res.status(200).json({ success: true, results: manualResults });
   } catch (err) {
     console.error("❌ Proxy handler error:", err);
-    res.status(500).json({ success: false, error: err.message });
+    return res.status(500).json({ success: false, error: err.message });
   }
 }
-
-
-
-
