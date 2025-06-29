@@ -1,68 +1,69 @@
 export default async function handler(req, res) {
-  const sheetScriptUrl = "https://script.google.com/macros/s/AKfycby6qB2Mi9WFjgHC2rGV8m33ncQyT5npfseuUlKR1vqliPt3DrFCcP_8tsD7Q5slIS7ZJA/exec";
+  const targetUrl = "https://script.google.com/macros/s/AKfycby6qB2Mi9WFjgHC2rGV8m33ncQyT5npfseuUlKR1vqliPt3DrFCcP_8tsD7Q5slIS7ZJA/exec";
 
   if (req.method === "GET") {
     try {
-      const response = await fetch(sheetScriptUrl);
+      const response = await fetch(targetUrl);
       const data = await response.json();
-      console.log("📥 Sheet data retrieved:", data);
+      console.log("📥 Retrieved sheet data:", data);
       return res.status(200).json(data);
     } catch (err) {
-      console.error("❌ GET proxy error:", err);
+      console.error("❌ GET error:", err);
       return res.status(500).json({ success: false, error: err.message });
     }
   }
 
   if (req.method === "POST") {
     try {
-      const payload = req.body;
-      console.log("🟡 Incoming payload:", JSON.stringify(payload, null, 2));
+      const body = req.body;
 
-      const workouts = payload?.data?.workouts;
+      // ✅ Expecting: { results: [ { entry: { data: { workouts: [...] } } } ] }
+      const workouts = body?.results?.[0]?.entry?.data?.workouts;
+
       if (!Array.isArray(workouts)) {
-        return res.status(400).json({ success: false, error: "Invalid payload format: missing 'data.workouts'" });
+        return res.status(400).json({
+          success: false,
+          error: "Invalid data format: missing 'results' or 'workouts'",
+        });
       }
 
       const results = await Promise.all(
-        workouts.map(async (workout, index) => {
-          const formattedWorkout = {
-            date: workout.start || "",
+        workouts.map(async (w, i) => {
+          const formatted = {
+            date: w.start || "",
             type: "autoExport",
-            exercise: workout.name || "",
-            duration: workout.duration || "",
-            distance: workout.distance?.qty || "",
+            exercise: w.name || "",
+            sets: "",
+            reps: "",
+            weight: "",
+            duration: w.duration || "",
+            distance: w.distance?.qty || "",
             pace: "",
             zone: "",
-            notes: "Auto Export sync"
+            notes: "Auto Export sync",
           };
 
           try {
-            const forwardRes = await fetch(sheetScriptUrl, {
+            const forwardRes = await fetch(targetUrl, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(formattedWorkout),
+              body: JSON.stringify(formatted),
             });
 
-            const responseText = await forwardRes.text();
-            console.log(`✅ Forwarded workout ${index + 1}:`, responseText);
+            const text = await forwardRes.text();
+            console.log(`✅ Workout ${i + 1} forwarded:`, text);
 
-            return {
-              entry: formattedWorkout,
-              response: responseText,
-            };
+            return { entry: formatted, response: text };
           } catch (err) {
-            console.error(`❌ Error forwarding workout ${index + 1}:`, err);
-            return {
-              entry: formattedWorkout,
-              error: err.toString(),
-            };
+            console.error(`❌ Error with workout ${i + 1}:`, err);
+            return { entry: formatted, error: err.toString() };
           }
         })
       );
 
       return res.status(200).json({ success: true, forwarded: workouts.length, results });
     } catch (err) {
-      console.error("❌ POST proxy handler error:", err);
+      console.error("❌ POST handler error:", err);
       return res.status(500).json({ success: false, error: err.message });
     }
   }
