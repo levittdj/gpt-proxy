@@ -48,7 +48,7 @@ export default async function handler(req, res) {
           const formatted = {
             date: w.start ? new Date(w.date).toISOString().split("T")[0] : "",
             type: "autoExport",
-            exercise: w.exercise || "",
+            exercise: w.name || "",
             sets: "",
             reps: "",
             weight: "",
