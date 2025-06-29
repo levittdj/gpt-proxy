@@ -16,9 +16,17 @@ export default async function handler(req, res) {
   if (req.method === "POST") {
     try {
       const body = req.body;
+      let workouts = null;
 
-      // ✅ Expecting: { results: [ { entry: { data: { workouts: [...] } } } ] }
-      const workouts = body?.results?.[0]?.entry?.data?.workouts;
+      // 🧠 Case A: Already wrapped format
+      if (body?.results?.[0]?.entry?.data?.workouts) {
+        workouts = body.results[0].entry.data.workouts;
+      }
+
+      // 🧠 Case B: Auto Export format (unwrapped)
+      else if (body?.data?.workouts) {
+        workouts = body.data.workouts;
+      }
 
       if (!Array.isArray(workouts)) {
         return res.status(400).json({
@@ -28,51 +36,49 @@ export default async function handler(req, res) {
       }
 
       const results = await Promise.all(
-  workouts.map(async (w, i) => {
-    const formatted = {
-      date: w.start || "",
-      type: "autoExport",
-      exercise: w.name || "",
-      sets: "",
-      reps: "",
-      weight: "",
-      duration: w.duration || "",
-      distance: w.distance?.qty || "",
-      pace: "",
-      zone: "",
-      notes: "Auto Export sync",
-    };
+        workouts.map(async (w, i) => {
+          const formatted = {
+            date: w.start || "",
+            type: "autoExport",
+            exercise: w.name || "",
+            sets: "",
+            reps: "",
+            weight: "",
+            duration: w.duration || "",
+            distance: w.distance?.qty || "",
+            pace: "",
+            zone: "",
+            notes: "Auto Export sync",
+          };
 
-    // Wrap inside 'results' array structure expected by the Apps Script
-    const wrappedPayload = {
-      results: [
-        {
-          entry: {
-            data: {
-              workouts: [formatted]
-            }
-          },
-          response: JSON.stringify({ success: true })
-        }
-      ],
-      success: 1
-    };
+          const wrappedPayload = {
+            results: [
+              {
+                entry: {
+                  data: {
+                    workouts: [formatted],
+                  },
+                },
+                response: JSON.stringify({ success: true }),
+              },
+            ],
+            success: 1,
+          };
 
-    try {
-      const forwardRes = await fetch(targetUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(wrappedPayload),
-      });
+          try {
+            const forwardRes = await fetch(targetUrl, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(wrappedPayload),
+            });
 
-      const text = await forwardRes.text();
-      return { entry: formatted, response: text };
-    } catch (err) {
-      return { entry: formatted, error: err.toString() };
-    }
-  })
-);
-
+            const text = await forwardRes.text();
+            return { entry: formatted, response: text };
+          } catch (err) {
+            return { entry: formatted, error: err.toString() };
+          }
+        })
+      );
 
       return res.status(200).json({ success: true, forwarded: workouts.length, results });
     } catch (err) {
@@ -83,3 +89,4 @@ export default async function handler(req, res) {
 
   return res.status(405).json({ error: "Method not allowed" });
 }
+
