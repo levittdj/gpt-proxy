@@ -9,74 +9,54 @@ export default async function handler(req, res) {
     const payload = req.body;
     const resultsArray = [];
 
-    // Detect if this is a batch from Auto Export
+    let workouts = [];
+
+    // Case 1: Auto Export format with results array
     if (payload.results && Array.isArray(payload.results)) {
-      for (const [index, resultWrapper] of payload.results.entries()) {
-        const workouts = resultWrapper?.entry?.data?.workouts || [];
-
-        for (const workout of workouts) {
-          const transformedWorkout = {
-            date: workout.start || "",
-            type: "auto-export",
-            exercise: workout.name || "",
-            duration: parseFloat(workout.duration) || "",
-            distance: parseFloat(workout.distance?.qty) || "",
-            pace: "", // You could calculate pace later
-            zone: "",
-            notes: `AutoExport log`,
-          };
-
-          const forwardRes = await fetch(targetUrl, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(transformedWorkout),
-          });
-
-          const resultText = await forwardRes.text();
-          console.log(`✅ AutoExport workout ${index + 1}: ${resultText}`);
-
-          resultsArray.push({
-            entry: transformedWorkout,
-            response: resultText,
-          });
-        }
+      for (const wrapper of payload.results) {
+        const nestedWorkouts = wrapper?.entry?.data?.workouts || [];
+        workouts.push(...nestedWorkouts);
       }
-
-      return res.status(200).json({ success: true, results: resultsArray });
     }
 
-    // Fallback: treat as single or batch object(s)
-    const entries = Array.isArray(payload) ? payload : [payload];
+    // Case 2: Raw workouts array directly in body
+    else if (payload.workouts && Array.isArray(payload.workouts)) {
+      workouts = payload.workouts;
+    } else {
+      return res.status(400).json({ success: false, error: "Invalid data format: missing 'results' or 'workouts'" });
+    }
 
-    const manualResults = await Promise.all(
-      entries.map(async (entry, index) => {
-        try {
-          const forwardRes = await fetch(targetUrl, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(entry),
-          });
+    // Forward each workout
+    for (const [index, workout] of workouts.entries()) {
+      const transformed = {
+        date: workout.start || "",
+        type: "auto-export",
+        exercise: workout.name || "",
+        duration: parseFloat(workout.duration) || "",
+        distance: parseFloat(workout.distance?.qty) || "",
+        pace: "",
+        zone: "",
+        notes: "AutoExport sync",
+      };
 
-          const resultText = await forwardRes.text();
-          console.log(`✅ Manual entry ${index + 1}:`, resultText);
+      const forwardRes = await fetch(targetUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(transformed),
+      });
 
-          return {
-            entry,
-            response: resultText,
-          };
-        } catch (err) {
-          console.error(`❌ Error forwarding manual entry ${index + 1}:`, err);
-          return {
-            entry,
-            error: err.toString(),
-          };
-        }
-      })
-    );
+      const resultText = await forwardRes.text();
+      console.log(`✅ Forwarded workout ${index + 1}: ${resultText}`);
 
-    return res.status(200).json({ success: true, results: manualResults });
+      resultsArray.push({
+        entry: transformed,
+        response: resultText,
+      });
+    }
+
+    return res.status(200).json({ success: true, results: resultsArray });
   } catch (err) {
-    console.error("❌ Proxy handler error:", err);
+    console.error("❌ Proxy error:", err);
     return res.status(500).json({ success: false, error: err.message });
   }
 }
