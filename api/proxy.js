@@ -1,3 +1,21 @@
+function parseWorkoutDate(dateString) {
+  try {
+    const parts = dateString.split(" ");
+    const iso = `${parts[0]}T${parts[1]}${getOffset(parts[2])}`;
+    const d = new Date(iso);
+    return !isNaN(d) ? d.toISOString().split("T")[0] : "";
+  } catch {
+    return "";
+  }
+}
+
+function getOffset(offsetStr) {
+  // Convert "-0400" to "-04:00"
+  return offsetStr?.length === 5
+    ? `${offsetStr.slice(0, 3)}:${offsetStr.slice(3)}`
+    : "";
+}
+
 export default async function handler(req, res) {
   const targetUrl =
     "https://script.google.com/macros/s/AKfycby6qB2Mi9WFjgHC2rGV8m33ncQyT5npfseuUlKR1vqliPt3DrFCcP_8tsD7Q5slIS7ZJA/exec";
@@ -43,20 +61,7 @@ export default async function handler(req, res) {
 
       const results = await Promise.all(
         workouts.map(async (w, i) => {
-          // 🕒 Parse start date safely
-          let parsedDate = "";
-          try {
-            if (w.start) {
-              // Convert e.g. "2025-06-28 16:14:13 -0400" -> ISO
-              const cleaned = w.start.replace(/ -\d{4}$/, "Z");
-              const d = new Date(cleaned);
-              if (!isNaN(d)) {
-                parsedDate = d.toISOString().split("T")[0];
-              }
-            }
-          } catch (e) {
-            console.warn(`⚠️ Invalid date format in workout #${i + 1}:`, w.start);
-          }
+          const parsedDate = w.start ? parseWorkoutDate(w.start) : "";
 
           const formatted = {
             date: parsedDate,
@@ -124,3 +129,4 @@ export default async function handler(req, res) {
   // 🔴 Unsupported HTTP methods
   return res.status(405).json({ error: "Method not allowed" });
 }
+
