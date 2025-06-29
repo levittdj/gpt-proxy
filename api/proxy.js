@@ -1,9 +1,15 @@
 export default async function handler(req, res) {
-  const targetUrl = "https://script.google.com/macros/s/AKfycby6qB2Mi9WFjgHC2rGV8m33ncQyT5npfseuUlKR1vqliPt3DrFCcP_8tsD7Q5slIS7ZJA/exec";
+  const targetUrl = "https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec";
 
   if (req.method === "GET") {
-    // Simple ping for diagnostics
-    return res.status(200).json({ success: true, message: "Proxy is alive!" });
+    try {
+      const forwardRes = await fetch(targetUrl);
+      const data = await forwardRes.json();
+      return res.status(200).json(data);
+    } catch (err) {
+      console.error("❌ GET proxy error:", err);
+      return res.status(500).json({ success: false, error: err.message });
+    }
   }
 
   if (req.method !== "POST") {
@@ -12,7 +18,6 @@ export default async function handler(req, res) {
 
   try {
     const incoming = req.body;
-    console.log("🟡 Incoming payload:", JSON.stringify(incoming, null, 2));
 
     const wrappedPayload = {
       results: [
@@ -24,8 +29,6 @@ export default async function handler(req, res) {
       success: 1
     };
 
-    console.log("📦 Wrapped payload:", JSON.stringify(wrappedPayload, null, 2));
-
     const forwardRes = await fetch(targetUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -33,7 +36,6 @@ export default async function handler(req, res) {
     });
 
     const responseText = await forwardRes.text();
-    console.log("✅ Response from Google Apps Script:", responseText);
 
     res.status(200).json({
       success: true,
@@ -49,3 +51,4 @@ export default async function handler(req, res) {
     });
   }
 }
+
