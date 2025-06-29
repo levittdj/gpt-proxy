@@ -2,22 +2,23 @@ export default async function handler(req, res) {
   const targetUrl =
     "https://script.google.com/macros/s/AKfycby6qB2Mi9WFjgHC2rGV8m33ncQyT5npfseuUlKR1vqliPt3DrFCcP_8tsD7Q5slIS7ZJA/exec";
 
-  // 📅 Safe date parser for "YYYY-MM-DD HH:mm:ss ±hhmm"
   function parseDate(raw) {
+    if (!raw || typeof raw !== "string") return "";
     try {
-      const match = raw.match(/^(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}) ([+-]\d{4})$/);
+      // Convert "2025-06-28 16:14:13 -0400" → "2025-06-28T16:14:13-04:00"
+      const match = raw.match(/^(.+?) (.+?) ([\+\-]\d{4})$/);
       if (!match) return "";
       const [_, date, time, offset] = match;
-      const formattedOffset = `${offset.slice(0, 3)}:${offset.slice(3)}`; // "-0400" → "-04:00"
-      const iso = `${date}T${time}${formattedOffset}`;
-      const d = new Date(iso);
+      const formattedOffset = `${offset.slice(0, 3)}:${offset.slice(3)}`;
+      const isoString = `${date}T${time}${formattedOffset}`;
+      const d = new Date(isoString);
       return isNaN(d) ? "" : d.toISOString().split("T")[0];
-    } catch {
+    } catch (err) {
+      console.warn("⚠️ Date parse error:", err);
       return "";
     }
   }
 
-  // 🔹 GET — Retrieve sheet data
   if (req.method === "GET") {
     try {
       const response = await fetch(targetUrl);
@@ -28,16 +29,17 @@ export default async function handler(req, res) {
     }
   }
 
-  // 🔹 POST — Send workouts to sheet
   if (req.method === "POST") {
     try {
       const body = req.body;
       let workouts = null;
 
-      // 🧠 Detect input shape
+      // Wrapped format (from GPT or manually constructed)
       if (body?.results?.[0]?.entry?.data?.workouts) {
         workouts = body.results[0].entry.data.workouts;
-      } else if (body?.data?.workouts) {
+      }
+      // Auto Export format
+      else if (body?.data?.workouts) {
         workouts = body.data.workouts;
       }
 
@@ -51,14 +53,14 @@ export default async function handler(req, res) {
       const results = await Promise.all(
         workouts.map(async (w, i) => {
           const formatted = {
-            date: w.start ? parseDate(w.start) : "",
-            type: "cardio", // optional: replace with custom logic if needed
-            exercise: w.name || "",
+            date: parseDate(w.start),
+            type: "cardio",
+            exercise: w.name || "(no name)",
             sets: "",
             reps: "",
             weight: "",
-            duration: w.duration || "",
-            distance: w.distance?.qty || "",
+            duration: w.duration ? Number(w.duration).toFixed(1) : "",
+            distance: w.distance?.qty ? Number(w.distance.qty).toFixed(2) : "",
             pace: "",
             zone: "",
             notes: "Auto Export sync",
@@ -85,10 +87,14 @@ export default async function handler(req, res) {
               body: JSON.stringify(wrappedPayload),
             });
 
-            const text = await forwardRes.text();
-            return { entry: formatted, response: text };
+            const responseText = await forwardRes.text();
+            console.log(`✅ Sent workout #${i + 1}:`, formatted);
+            console.log(`📬 Response #${i + 1}:`, responseText);
+
+            return { entry: formatted, response: responseText };
           } catch (err) {
-            return { entry: formatted, error: err.toString() };
+            console.error(`❌ Failed to send workout #${i + 1}:`, err);
+            return { entry: formatted, error: err.message };
           }
         })
       );
