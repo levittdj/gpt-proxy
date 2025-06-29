@@ -19,33 +19,6 @@ export default async function handler(req, res) {
   try {
     const incoming = req.body;
 
-    // 💡 Inject date into each workout object
-    if (
-      incoming &&
-      incoming.data &&
-      Array.isArray(incoming.data.workouts)
-    ) {
-      incoming.data.workouts = incoming.data.workouts.map((w) => {
-        let parsedDate = "";
-        try {
-          if (w.start) {
-            const cleaned = w.start.replace(/ -\d{4}$/, "Z"); // remove timezone offset if present
-            const d = new Date(cleaned);
-            if (!isNaN(d)) {
-              parsedDate = d.toISOString().split("T")[0];
-            }
-          }
-        } catch (e) {
-          console.warn("⚠️ Invalid start date format:", w.start);
-        }
-
-        return {
-          ...w,
-          date: parsedDate
-        };
-      });
-    }
-
     const wrappedPayload = {
       results: [
         {
