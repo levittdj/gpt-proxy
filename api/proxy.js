@@ -51,9 +51,9 @@ export default async function handler(req, res) {
       const results = await Promise.all(
         workouts.map(async (w, i) => {
           const formatted = {
-            date: w.date ? parseDate(w.date) : "",
+            date: w.start ? parseDate(w.start) : "",
             type: "cardio", // optional: replace with custom logic if needed
-            exercise: w.exercise || "",
+            exercise: w.name || "",
             sets: "",
             reps: "",
             weight: "",
