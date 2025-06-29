@@ -46,9 +46,9 @@ export default async function handler(req, res) {
         workouts.map(async (w, i) => {
           // ⬇ Format as single workout entry expected by Apps Script
           const formatted = {
-            date: w.start ? new Date(w.start).toISOString().split("T")[0] : "",
+            date: w.start ? new Date(w.date).toISOString().split("T")[0] : "",
             type: "autoExport",
-            exercise: w.name || "",
+            exercise: w.exercise || "",
             sets: "",
             reps: "",
             weight: "",
