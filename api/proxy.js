@@ -7,6 +7,7 @@ export default async function handler(req, res) {
 
   try {
     const payload = req.body;
+    console.log("🟡 Incoming payload:", JSON.stringify(req.body, null, 2));
     const resultsArray = [];
 
     let workouts = [];
