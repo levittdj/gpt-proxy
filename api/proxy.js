@@ -21,19 +21,17 @@ export default async function handler(req, res) {
       const body = req.body;
       let workouts = null;
 
-      // ✅ Case A: Already wrapped format
+      // ✅ Wrapped format (e.g. from GPT)
       if (body?.results?.[0]?.entry?.data?.workouts) {
         workouts = body.results[0].entry.data.workouts;
         console.log("🧠 Received wrapped format");
       }
-
-      // ✅ Case B: Auto Export-style unwrapped format
+      // ✅ Auto Export direct format
       else if (body?.data?.workouts) {
         workouts = body.data.workouts;
         console.log("🧠 Received unwrapped Auto Export format");
       }
 
-      // ❌ Invalid format
       if (!Array.isArray(workouts)) {
         return res.status(400).json({
           success: false,
@@ -45,20 +43,21 @@ export default async function handler(req, res) {
 
       const results = await Promise.all(
         workouts.map(async (w, i) => {
-          // 🔐 Defensive date parsing
+          // 🕒 Parse start date safely
           let parsedDate = "";
           try {
             if (w.start) {
-              const d = new Date(w.start);
+              // Convert e.g. "2025-06-28 16:14:13 -0400" -> ISO
+              const cleaned = w.start.replace(/ -\d{4}$/, "Z");
+              const d = new Date(cleaned);
               if (!isNaN(d)) {
                 parsedDate = d.toISOString().split("T")[0];
               }
             }
           } catch (e) {
-            console.warn(`⚠️ Invalid date in workout #${i + 1}:`, w.start);
+            console.warn(`⚠️ Invalid date format in workout #${i + 1}:`, w.start);
           }
 
-          // 🧾 Format single workout row for the sheet
           const formatted = {
             date: parsedDate,
             type:
@@ -111,9 +110,11 @@ export default async function handler(req, res) {
         })
       );
 
-      return res
-        .status(200)
-        .json({ success: true, forwarded: workouts.length, results });
+      return res.status(200).json({
+        success: true,
+        forwarded: workouts.length,
+        results,
+      });
     } catch (err) {
       console.error("❌ POST handler error:", err);
       return res.status(500).json({ success: false, error: err.message });
