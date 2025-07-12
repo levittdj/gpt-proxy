@@ -99,20 +99,13 @@ paths:
                     example: ok
                   stored:
                     $ref: '#/components/schemas/Workout'
-  "/api/run-trends":
+  "/api/run-trends?x-vercel-protection-bypass=1CQBplG678yMDnEwGaTSEojJb2h1uUMm":
     get:
       summary: Get weekly running trends
       operationId: getRunTrends
       security:
         - ApiKeyAuth: []
       parameters:
-        - name: x-vercel-protection-bypass
-          in: query
-          description: Constant token required by Vercel Protection
-          required: true
-          schema:
-            type: string
-            default: 1CQBplG678yMDnEwGaTSEojJb2h1uUMm
         - name: weeks
           in: query
           description: Number of ISO weeks to include (default 4)
@@ -140,20 +133,13 @@ paths:
                         avgPace: { type: number, nullable: true, description: "Minutes per km" }
                   progressing:
                     type: boolean
-  "/api/cycle-trends":
+  "/api/cycle-trends?x-vercel-protection-bypass=1CQBplG678yMDnEwGaTSEojJb2h1uUMm":
     get:
       summary: Get weekly cycling trends
       operationId: getCycleTrends
       security:
         - ApiKeyAuth: []
       parameters:
-        - name: x-vercel-protection-bypass
-          in: query
-          description: Constant token required by Vercel Protection
-          required: true
-          schema:
-            type: string
-            default: 1CQBplG678yMDnEwGaTSEojJb2h1uUMm
         - name: weeks
           in: query
           description: Number of ISO weeks to include (default 4)
@@ -181,20 +167,13 @@ paths:
                         avgSpeed: { type: number, nullable: true, description: "Km/h" }
                   progressing:
                     type: boolean
-  "/api/swim-trends":
+  "/api/swim-trends?x-vercel-protection-bypass=1CQBplG678yMDnEwGaTSEojJb2h1uUMm":
     get:
       summary: Get weekly swimming trends
       operationId: getSwimTrends
       security:
         - ApiKeyAuth: []
       parameters:
-        - name: x-vercel-protection-bypass
-          in: query
-          description: Constant token required by Vercel Protection
-          required: true
-          schema:
-            type: string
-            default: 1CQBplG678yMDnEwGaTSEojJb2h1uUMm
         - name: weeks
           in: query
           description: Number of ISO weeks to include (default 4)
