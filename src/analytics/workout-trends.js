@@ -17,6 +17,34 @@ module.exports = async function getWorkoutTrends(weeks = 4) {
   const startDate = subDays(endDate, weeks * 7);
 
   const workouts = await gs.getWorkouts(startDate, endDate);
+
+  // Also include individual strength sets from the Strength sheet
+  try {
+    const strengthRows = await gs.readData('Strength');
+    const headers = strengthRows[0].map(h => (h || '').toString().toLowerCase());
+    const idx = name => headers.indexOf(name);
+    const dateCol = idx('date');
+    const exerciseCol = idx('exercise');
+    const repsCol = idx('reps');
+    const weightCol = idx('weight');
+
+    strengthRows.slice(1).forEach(row => {
+      const dateStr = row[dateCol];
+      if (!dateStr) return;
+      const d = parseISO(dateStr.toString().slice(0, 10));
+      if (isNaN(d) || d < startDate || d > endDate) return;
+
+      workouts.push({
+        date: dateStr.toString().slice(0, 10),
+        type: row[exerciseCol] || 'Strength',
+        reps: row[repsCol],
+        weight: row[weightCol],
+        sets: 1
+      });
+    });
+  } catch (err) {
+    console.warn('⚠️  Unable to read Strength sheet:', err.message);
+  }
   if (!workouts.length) return { weeks: [], progressing: [], stalling: [] };
 
   // Helper to get week key
