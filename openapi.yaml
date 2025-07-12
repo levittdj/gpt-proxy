@@ -112,7 +112,7 @@ paths:
           required: true
           schema:
             type: string
-            example: 1CQBplG678yMDnEwGaTSEojJb2h1uUMm
+            default: 1CQBplG678yMDnEwGaTSEojJb2h1uUMm
         - name: weeks
           in: query
           description: Number of ISO weeks to include (default 4)
@@ -153,7 +153,7 @@ paths:
           required: true
           schema:
             type: string
-            example: 1CQBplG678yMDnEwGaTSEojJb2h1uUMm
+            default: 1CQBplG678yMDnEwGaTSEojJb2h1uUMm
         - name: weeks
           in: query
           description: Number of ISO weeks to include (default 4)
@@ -194,7 +194,7 @@ paths:
           required: true
           schema:
             type: string
-            example: 1CQBplG678yMDnEwGaTSEojJb2h1uUMm
+            default: 1CQBplG678yMDnEwGaTSEojJb2h1uUMm
         - name: weeks
           in: query
           description: Number of ISO weeks to include (default 4)
