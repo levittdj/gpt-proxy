@@ -99,3 +99,4 @@ Thumbs.db
 # API credentials and sensitive data
 credentials.json
 token.json 
+.vercel

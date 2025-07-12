@@ -187,6 +187,11 @@
 The automated data flow is now complete and ready for immediate use. Follow the setup guide in `google-apps-script/SETUP_GUIDE.md` to get your HealthFit data automatically flowing into Google Sheets!
 
 ## Post-MVP Enhancements (P1)
+- [ ] **ChatGPT → Vercel → Sheets workflow**
+  - [ ] Extend current strength-set endpoint to support generic **workout rows** (all types, not just strength)
+  - [ ] Update OpenAPI schema & ChatGPT action so users can log any workout via chat
+  - [ ] Validate data mapping and ensure progressive-overload analytics still work
+
 ### QS Access Sleep-Stage Integration (Better Readiness Scoring)
 - [ ] **Enable data source on phone**
   - [ ] In QS Access → Create Table named `DailyExtra` with columns: Date, REM Minutes, Deep Minutes, Core Minutes, VO₂ Max (optional extras).
@@ -202,6 +207,7 @@ The automated data flow is now complete and ready for immediate use. Follow the 
   - [ ] Add duplicate-file prevention (skip if date already processed).
 - [ ] **Google Sheets updates**
   - [ ] Add columns REM (min), Deep (min), Core (min) to the Sleep tab.
+  - [ ] **Add Sleep architecture to Sleep tab (REM / Deep / Core mins)**
   - [ ] Add **OKRs/Quarterly Targets** tab in Master Performance Tracker with fields: Quarter, Target Metric, Baseline, Goal, Status.
   - [ ] Add corresponding headers to any downstream IMPORTRANGE sheets.
 - [ ] **Analytics updates**
