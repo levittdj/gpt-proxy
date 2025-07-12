@@ -18,12 +18,27 @@ class GoogleSheetsIntegration {
    */
   async initialize() {
     try {
-      // For now, we'll use service account authentication
-      // In production, you'd want to implement OAuth2 flow
-      this.auth = new google.auth.GoogleAuth({
-        keyFile: process.env.GOOGLE_SERVICE_ACCOUNT_KEY_FILE,
-        scopes: ['https://www.googleapis.com/auth/spreadsheets']
-      });
+      // Service-account authentication: accept either a file path (local dev)
+      // or the raw JSON string injected by Vercel (production).
+      const saKey = process.env.GOOGLE_SERVICE_ACCOUNT_KEY_FILE;
+      if (!saKey) {
+        throw new Error('GOOGLE_SERVICE_ACCOUNT_KEY_FILE env var is missing');
+      }
+
+      const authOpts = { scopes: ['https://www.googleapis.com/auth/spreadsheets'] };
+
+      // If the value starts with a "{" we assume it is the full JSON string.
+      if (saKey.trim().startsWith('{')) {
+        try {
+          authOpts.credentials = JSON.parse(saKey);
+        } catch (err) {
+          throw new Error('Failed to parse GOOGLE_SERVICE_ACCOUNT_KEY_FILE JSON');
+        }
+      } else {
+        authOpts.keyFile = saKey;
+      }
+
+      this.auth = new google.auth.GoogleAuth(authOpts);
 
       this.sheets = google.sheets({ version: 'v4', auth: this.auth });
       
