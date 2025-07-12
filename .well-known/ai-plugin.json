@@ -1,0 +1,19 @@
+{
+  "schema_version": "v1",
+  "name_for_human": "Fitness Agent",
+  "name_for_model": "fitness_agent",
+  "description_for_human": "Log workouts and readiness data into Google Sheets.",
+  "description_for_model": "API for logging strength sets and other fitness data into Google Sheets.",
+  "auth": {
+    "type": "api_key",
+    "authorization_type": "header",
+    "verification_tokens": {}
+  },
+  "api": {
+    "type": "openapi",
+    "url": "https://gpt-proxy-ajyz0b06i-dans-projects-19e6c8d0.vercel.app/openapi.yaml"
+  },
+  "logo_url": "https://gpt-proxy-ajyz0b06i-dans-projects-19e6c8d0.vercel.app/logo.png",
+  "contact_email": "dan@example.com",
+  "legal_info_url": "https://example.com/legal"
+} 

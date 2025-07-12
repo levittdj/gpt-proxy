@@ -1,0 +1,79 @@
+openapi: 3.0.1
+info:
+  title: Personal Fitness Agent API
+  version: 1.0.0
+  description: API for logging and retrieving fitness data (strength sets, workouts, readiness, etc.).
+servers:
+  - url: https://gpt-proxy-ajyz0b06i-dans-projects-19e6c8d0.vercel.app
+paths:
+  /api/strength:
+    post:
+      summary: Log a strength-training set
+      operationId: logStrengthSet
+      security:
+        - ApiKeyAuth: []
+          VercelBypass: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StrengthSet'
+      responses:
+        "200":
+          description: Successfully stored the set
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  stored:
+                    $ref: '#/components/schemas/StrengthSet'
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: x-api-key
+      description: |
+        Fitness Agent API key sent in `x-api-key` header.
+        Example value: super-secret-123
+    VercelBypass:
+      type: apiKey
+      in: header
+      name: x-vercel-protection-bypass
+      description: |
+        Vercel automation bypass header value.
+        Example value: 1CQBplG678yMDnEwGaTSEojJb2h1uUMm
+  schemas:
+    StrengthSet:
+      type: object
+      required: [date, exercise, setNumber, reps, weight]
+      properties:
+        date:
+          type: string
+          description: ISO date (YYYY-MM-DD)
+          example: "2025-07-12"
+        exercise:
+          type: string
+          example: Squat
+        setNumber:
+          type: integer
+          example: 1
+        reps:
+          type: integer
+          example: 8
+        weight:
+          type: number
+          example: 135
+        rpe:
+          type: number
+          nullable: true
+          example: 7
+        notes:
+          type: string
+          nullable: true
+          example: "test via ChatGPT Action" 
