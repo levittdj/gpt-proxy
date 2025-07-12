@@ -526,22 +526,41 @@ class GoogleSheetsIntegration {
    * Get workouts for a date range
    */
   async getWorkouts(startDate, endDate) {
-    const data = await this.readData('Workouts');
-    const headers = data[0];
-    const rows = data.slice(1);
-
-    return rows
-      .map(row => {
-        const workout = {};
-        headers.forEach((header, index) => {
-          workout[header.toLowerCase()] = row[index];
+    const mergeRows = async (rawData) => {
+      if (!rawData || rawData.length === 0) return [];
+      const headers = rawData[0];
+      const rows = rawData.slice(1);
+      return rows.map(row => {
+        const obj = {};
+        headers.forEach((h, idx) => {
+          if (h) obj[h.toLowerCase()] = row[idx];
         });
-        return workout;
-      })
-      .filter(workout => {
-        const workoutDate = new Date(workout.date);
-        return workoutDate >= startDate && workoutDate <= endDate;
+        return obj;
       });
+    };
+
+    // Primary sheet
+    const mainData = await this.readData('Workouts');
+    let workouts = await mergeRows(mainData);
+
+    // Optionally pull workouts from the original HealthFit spreadsheet
+    const hfSheetId = process.env.GOOGLE_HF_WORKOUTS_SPREADSHEET_ID;
+    if (hfSheetId && hfSheetId !== this.spreadsheetId) {
+      try {
+        const hfData = await this.readDataFromSheet(hfSheetId, 'Workouts');
+        workouts = workouts.concat(await mergeRows(hfData));
+      } catch (err) {
+        console.warn('⚠️  Unable to read HealthFit Workouts sheet:', err.message);
+      }
+    }
+
+    // Filter by date range (inclusive)
+    return workouts.filter(w => {
+      const dVal = w.date || w['date/time'] || w.timestamp || '';
+      if (!dVal) return false;
+      const d = new Date(typeof dVal === 'string' ? dVal.replace(/\s+UTC$/, '') : dVal);
+      return !isNaN(d) && d >= startDate && d <= endDate;
+    });
   }
 
   /**

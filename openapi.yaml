@@ -4,9 +4,9 @@ info:
   version: 1.0.0
   description: API for logging and retrieving fitness data (strength sets, workouts, readiness, etc.).
 servers:
-  - url: https://gpt-proxy-ig5qo0hbt-dans-projects-19e6c8d0.vercel.app
+  - url: https://gpt-proxy-747xkkae2-dans-projects-19e6c8d0.vercel.app
 paths:
-  /api/strength:
+  "/api/strength?x-vercel-protection-bypass=1CQBplG678yMDnEwGaTSEojJb2h1uUMm":
     post:
       summary: Log a strength-training set
       operationId: logStrengthSet
@@ -74,6 +74,31 @@ paths:
                   stalling:
                     type: array
                     items: { type: string }
+  "/api/workout?x-vercel-protection-bypass=1CQBplG678yMDnEwGaTSEojJb2h1uUMm":
+    post:
+      summary: Log an endurance or cross-training workout (run, bike, swim, etc.)
+      operationId: logWorkout
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Workout'
+      responses:
+        "200":
+          description: Successfully stored the workout
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  stored:
+                    $ref: '#/components/schemas/Workout'
 components:
   securitySchemes:
     ApiKeyAuth:
@@ -111,4 +136,43 @@ components:
         notes:
           type: string
           nullable: true
-          example: "test via ChatGPT Action" 
+          example: "test via ChatGPT Action"
+    Workout:
+      type: object
+      required: [date, type]
+      properties:
+        date:
+          type: string
+          description: ISO date (YYYY-MM-DD)
+          example: "2025-07-12"
+        type:
+          type: string
+          description: Activity type (Run, Bike, Swim, etc.)
+          example: Run
+        duration:
+          type: number
+          description: Minutes
+          example: 45
+        distance:
+          type: number
+          description: Kilometers
+          example: 10
+        calories:
+          type: number
+          example: 500
+        sets:
+          type: integer
+          nullable: true
+          example: 3
+        weight:
+          type: number
+          nullable: true
+          example: 0
+        reps:
+          type: integer
+          nullable: true
+          example: 0
+        notes:
+          type: string
+          nullable: true
+          example: "Afternoon tempo run" 
