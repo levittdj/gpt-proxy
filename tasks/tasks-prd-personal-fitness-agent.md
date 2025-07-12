@@ -303,3 +303,10 @@ const sleepDurValues = sleepRows.slice(1)
   - [ ] Create test cases with known expected scores
   - [ ] Add A/B testing framework for score improvements
   - [ ] Document correlation findings and optimization recommendations 
+
+- [ ] **Walking load & trends**
+  - [ ] Combine **Walking workout rows** (type contains "Walk") from the Workouts tab **AND** total daily **step count** from the Health Metrics tab.
+  - [ ] Compute weekly trends (distance, duration, steps, sessions, avg pace) and expose via `/api/walk-trends` endpoint.
+  - [ ] Update OpenAPI schema & ChatGPT actions to allow `getWalkTrends` (similar to run/cycle/swim).
+  - [ ] Add test coverage for mixed-source aggregation (workouts + daily metrics).
+  - [ ] Ensure trends analytics classify progression/stalling based on weekly step distance/load. 

@@ -99,6 +99,108 @@ paths:
                     example: ok
                   stored:
                     $ref: '#/components/schemas/Workout'
+  "/api/run-trends?x-vercel-protection-bypass=1CQBplG678yMDnEwGaTSEojJb2h1uUMm":
+    get:
+      summary: Get weekly running trends
+      operationId: getRunTrends
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: weeks
+          in: query
+          description: Number of ISO weeks to include (default 4)
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        "200":
+          description: Weekly running trend summary
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  weeks:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        week: { type: string, example: "2025-W27" }
+                        distance: { type: number, description: "Total km" }
+                        duration: { type: number, description: "Total minutes" }
+                        sessions: { type: integer }
+                        avgPace: { type: number, nullable: true, description: "Minutes per km" }
+                  progressing:
+                    type: boolean
+  "/api/cycle-trends?x-vercel-protection-bypass=1CQBplG678yMDnEwGaTSEojJb2h1uUMm":
+    get:
+      summary: Get weekly cycling trends
+      operationId: getCycleTrends
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: weeks
+          in: query
+          description: Number of ISO weeks to include (default 4)
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        "200":
+          description: Weekly cycling trend summary
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  weeks:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        week: { type: string, example: "2025-W27" }
+                        distance: { type: number, description: "Total km" }
+                        duration: { type: number, description: "Total minutes" }
+                        sessions: { type: integer }
+                        avgSpeed: { type: number, nullable: true, description: "Km/h" }
+                  progressing:
+                    type: boolean
+  "/api/swim-trends?x-vercel-protection-bypass=1CQBplG678yMDnEwGaTSEojJb2h1uUMm":
+    get:
+      summary: Get weekly swimming trends
+      operationId: getSwimTrends
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: weeks
+          in: query
+          description: Number of ISO weeks to include (default 4)
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        "200":
+          description: Weekly swimming trend summary
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  weeks:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        week: { type: string, example: "2025-W27" }
+                        distance: { type: number, description: "Total km" }
+                        duration: { type: number, description: "Total minutes" }
+                        sessions: { type: integer }
+                        avgPace: { type: number, nullable: true, description: "Minutes per km" }
+                  progressing:
+                    type: boolean
 components:
   securitySchemes:
     ApiKeyAuth:
