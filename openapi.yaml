@@ -1,10 +1,10 @@
-openapi: 3.0.1
+openapi: 3.1.0
 info:
   title: Personal Fitness Agent API
   version: 1.0.0
   description: API for logging and retrieving fitness data (strength sets, workouts, readiness, etc.).
 servers:
-  - url: https://gpt-proxy-ajyz0b06i-dans-projects-19e6c8d0.vercel.app
+  - url: https://gpt-proxy-ig5qo0hbt-dans-projects-19e6c8d0.vercel.app
 paths:
   /api/strength:
     post:
@@ -12,7 +12,6 @@ paths:
       operationId: logStrengthSet
       security:
         - ApiKeyAuth: []
-          VercelBypass: []
       requestBody:
         required: true
         content:
@@ -32,6 +31,49 @@ paths:
                     example: ok
                   stored:
                     $ref: '#/components/schemas/StrengthSet'
+  "/api/trends?x-vercel-protection-bypass=1CQBplG678yMDnEwGaTSEojJb2h1uUMm":
+    get:
+      operationId: getWorkoutTrends
+      summary: Get weekly workout trends
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: weeks
+          in: query
+          description: Number of recent ISO weeks to include (default 4)
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        "200":
+          description: Weekly trend summary
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  weeks:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        week: { type: string, example: "2025-W27" }
+                        metrics:
+                          type: object
+                          additionalProperties:
+                            type: object
+                            properties:
+                              tonnage: { type: number }
+                              distance: { type: number }
+                              duration: { type: number }
+                              sessions: { type: integer }
+                  progressing:
+                    type: array
+                    items: { type: string }
+                  stalling:
+                    type: array
+                    items: { type: string }
 components:
   securitySchemes:
     ApiKeyAuth:
@@ -39,15 +81,8 @@ components:
       in: header
       name: x-api-key
       description: |
-        Fitness Agent API key sent in `x-api-key` header.
+        Fitness Agent API key. Also requires x-vercel-protection-bypass header.
         Example value: super-secret-123
-    VercelBypass:
-      type: apiKey
-      in: header
-      name: x-vercel-protection-bypass
-      description: |
-        Vercel automation bypass header value.
-        Example value: 1CQBplG678yMDnEwGaTSEojJb2h1uUMm
   schemas:
     StrengthSet:
       type: object
