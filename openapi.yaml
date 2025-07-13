@@ -4,9 +4,9 @@ info:
   version: 1.0.0
   description: API for logging and retrieving fitness data (strength sets, workouts, readiness, etc.).
 servers:
-  - url: https://gpt-proxy-danlevitt.vercel.app
+  - url: https://gpt-proxy-danlevitt.vercel.app?x-vercel-protection-bypass=1CQBplG678yMDnEwGaTSEojJb2h1uUMm
 paths:
-  "/api/strength?x-vercel-protection-bypass=1CQBplG678yMDnEwGaTSEojJb2h1uUMm":
+  "/api/strength":
     post:
       summary: Log a strength-training set
       operationId: logStrengthSet
@@ -31,7 +31,7 @@ paths:
                     example: ok
                   stored:
                     $ref: '#/components/schemas/StrengthSet'
-  "/api/trends?x-vercel-protection-bypass=1CQBplG678yMDnEwGaTSEojJb2h1uUMm":
+  "/api/trends":
     get:
       operationId: getWorkoutTrends
       summary: Get weekly workout trends
@@ -74,7 +74,7 @@ paths:
                   stalling:
                     type: array
                     items: { type: string }
-  "/api/workout?x-vercel-protection-bypass=1CQBplG678yMDnEwGaTSEojJb2h1uUMm":
+  "/api/workout":
     post:
       summary: Log an endurance or cross-training workout (run, bike, swim, etc.)
       operationId: logWorkout
@@ -99,7 +99,7 @@ paths:
                     example: ok
                   stored:
                     $ref: '#/components/schemas/Workout'
-  "/api/run-trends?x-vercel-protection-bypass=1CQBplG678yMDnEwGaTSEojJb2h1uUMm":
+  "/api/run-trends":
     get:
       summary: Get weekly running trends
       operationId: getRunTrends
@@ -133,7 +133,7 @@ paths:
                         avgPace: { type: number, nullable: true, description: "Minutes per mile" }
                   progressing:
                     type: boolean
-  "/api/cycle-trends?x-vercel-protection-bypass=1CQBplG678yMDnEwGaTSEojJb2h1uUMm":
+  "/api/cycle-trends":
     get:
       summary: Get weekly cycling trends
       operationId: getCycleTrends
@@ -167,7 +167,7 @@ paths:
                         avgSpeed: { type: number, nullable: true, description: "Mph" }
                   progressing:
                     type: boolean
-  "/api/swim-trends?x-vercel-protection-bypass=1CQBplG678yMDnEwGaTSEojJb2h1uUMm":
+  "/api/swim-trends":
     get:
       summary: Get weekly swimming trends
       operationId: getSwimTrends
@@ -201,7 +201,7 @@ paths:
                         avgPace: { type: number, nullable: true, description: "Minutes per mile" }
                   progressing:
                     type: boolean
-  "/api/training-plan?x-vercel-protection-bypass=1CQBplG678yMDnEwGaTSEojJb2h1uUMm":
+  "/api/training-plan":
     get:
       summary: Get the latest training plan
       operationId: getTrainingPlan
