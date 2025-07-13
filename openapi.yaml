@@ -76,7 +76,7 @@ paths:
                     items: { type: string }
   "/api/workout?x-vercel-protection-bypass=1CQBplG678yMDnEwGaTSEojJb2h1uUMm":
     post:
-      summary: Log an endurance or cross-training workout (run, bike, swim, etc.)
+      summary: Log an endurance or cross-training workout (run, bike, swim, etc.). Return the raw API response without additional commentary.
       operationId: logWorkout
       security:
         - ApiKeyAuth: []
@@ -88,7 +88,7 @@ paths:
               $ref: '#/components/schemas/Workout'
       responses:
         "200":
-          description: Successfully stored the workout
+          description: Successfully stored the workout. Return this exact response without modification or additional commentary.
           content:
             application/json:
               schema:
@@ -201,6 +201,49 @@ paths:
                         avgPace: { type: number, nullable: true, description: "Minutes per km" }
                   progressing:
                     type: boolean
+  "/api/training-plan?x-vercel-protection-bypass=1CQBplG678yMDnEwGaTSEojJb2h1uUMm":
+    get:
+      summary: Get the latest training plan
+      operationId: getTrainingPlan
+      security:
+        - ApiKeyAuth: []
+      responses:
+        "200":
+          description: Latest training plan
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  plan:
+                    $ref: '#/components/schemas/TrainingPlan'
+    post:
+      summary: Create a new training plan
+      operationId: createTrainingPlan
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TrainingPlan'
+      responses:
+        "200":
+          description: Training plan created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  message:
+                    type: string
+                    example: Training plan created successfully
+                  plan:
+                    $ref: '#/components/schemas/TrainingPlan'
 components:
   securitySchemes:
     ApiKeyAuth:
@@ -277,4 +320,59 @@ components:
         notes:
           type: string
           nullable: true
-          example: "Afternoon tempo run" 
+          example: "Afternoon tempo run"
+    TrainingPlan:
+      type: object
+      required: [weekStart, weekEnd, planType]
+      properties:
+        weekStart:
+          type: string
+          format: date
+          description: Start date of the training week (ISO format)
+          example: "2025-01-13"
+        weekEnd:
+          type: string
+          format: date
+          description: End date of the training week (ISO format)
+          example: "2025-01-19"
+        planType:
+          type: string
+          description: Type of training plan (build, maintain, recovery, race-prep)
+          example: "build"
+        swimSessions:
+          type: integer
+          description: Number of swim sessions planned
+          example: 2
+        bikeSessions:
+          type: integer
+          description: Number of bike sessions planned
+          example: 3
+        runSessions:
+          type: integer
+          description: Number of run sessions planned
+          example: 2
+        strengthSessions:
+          type: integer
+          description: Number of strength sessions planned
+          example: 2
+        ptSessions:
+          type: integer
+          description: Number of physical therapy sessions planned
+          example: 3
+        recoverySessions:
+          type: integer
+          description: Number of recovery/rest sessions planned
+          example: 1
+        totalVolume:
+          type: integer
+          description: Total number of sessions planned
+          example: 13
+        intensity:
+          type: string
+          description: Overall intensity level (low, moderate, high)
+          example: "moderate"
+        notes:
+          type: string
+          nullable: true
+          description: Additional notes about the training plan
+          example: "Focus on building endurance base" 
