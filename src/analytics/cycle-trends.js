@@ -1,6 +1,11 @@
 const { getISOWeek, getISOWeekYear, subDays, parseISO } = require('date-fns');
 const GoogleSheets = require('../integrations/google-sheets');
 
+/**
+ * Compute weekly cycling trends (distance, duration, speed, sessions) for the last N iso weeks.
+ * @param {number} weeks - number of weeks to include, default 4
+ * @returns {Promise<Object>} { weeks:[{week, distance, duration, sessions, avgSpeed}], progressing:boolean } 
+ */
 module.exports = async function getCycleTrends(weeks = 4) {
   if (weeks <= 0) throw new Error('weeks parameter must be > 0');
 
@@ -13,16 +18,41 @@ module.exports = async function getCycleTrends(weeks = 4) {
   const workouts = await gs.getWorkouts(startDate, endDate);
   if (!workouts.length) return { weeks: [], progressing: false };
 
-  const isoKey = (d) => `${getISOWeekYear(d)}-W${String(getISOWeek(d)).padStart(2, '0')}`;
+  // Helper iso week key
+  const isoKey = (d) => {
+    const year = getISOWeekYear(d);
+    const wk = String(getISOWeek(d)).padStart(2, '0');
+    return `${year}-W${wk}`;
+  };
 
   const weekMap = {};
   workouts.forEach(w => {
     const type = (w.type || w.exercise || '').toString();
-    if (!type.toLowerCase().includes('cycle')) return;
+    // Check for various cycling workout types
+    const isCycling = type.toLowerCase().includes('cycle') || 
+                     type.toLowerCase().includes('cycling') ||
+                     type.toLowerCase().includes('bike') ||
+                     type.toLowerCase() === 'bike';
+    if (!isCycling) return; // skip non-cycling workouts
 
-    const dateVal = w.date || w['date/time'] || w.timestamp || w.date || '';
+    // parse date - handle various date formats
+    const dateVal = w.date || w['date/time'] || w.timestamp || '';
     if (!dateVal) return;
-    const dateObj = parseISO(dateVal.toString().slice(0, 10));
+    
+    let dateObj;
+    if (typeof dateVal === 'string') {
+      // Handle "7/11/2025" format
+      if (dateVal.includes('/')) {
+        const [month, day, year] = dateVal.split('/');
+        dateObj = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+      } else {
+        // Try ISO format
+        dateObj = parseISO(dateVal.toString().slice(0, 10));
+      }
+    } else {
+      dateObj = new Date(dateVal);
+    }
+    
     if (isNaN(dateObj)) return;
 
     const key = isoKey(dateObj);
@@ -31,12 +61,13 @@ module.exports = async function getCycleTrends(weeks = 4) {
 
     entry.sessions += 1;
     const dist = parseFloat(w.distance || 0);
-    if (!isNaN(dist)) entry.distance += dist;
+    if (!isNaN(dist)) entry.distance += dist; // assume km
     
-    // Parse duration from "Total Time" field (format: "0h:19m:19s")
-    const timeStr = w['total time'] || w.duration || '';
+    // Parse duration from "Total Time" field (format: "0h:19m:19s" or "0:19")
+    const timeStr = w['total time'] || w['total time'] || w.duration || '';
     let dur = 0;
     if (timeStr) {
+      // Handle "0h:19m:19s" format
       const timeMatch = timeStr.toString().match(/(\d+)h:(\d+)m:(\d+)s/);
       if (timeMatch) {
         const hours = parseInt(timeMatch[1]) || 0;
@@ -44,21 +75,30 @@ module.exports = async function getCycleTrends(weeks = 4) {
         const seconds = parseInt(timeMatch[3]) || 0;
         dur = hours * 60 + minutes + seconds / 60;
       } else {
-        // Fallback: try to parse as simple number (minutes)
-        dur = parseFloat(timeStr) || 0;
+        // Handle "0:19" format (hours:minutes)
+        const simpleMatch = timeStr.toString().match(/(\d+):(\d+)/);
+        if (simpleMatch) {
+          const hours = parseInt(simpleMatch[1]) || 0;
+          const minutes = parseInt(simpleMatch[2]) || 0;
+          dur = hours * 60 + minutes;
+        } else {
+          // Fallback: try to parse as simple number (minutes)
+          dur = parseFloat(timeStr) || 0;
+        }
       }
     }
     if (dur > 0) entry.duration += dur;
   });
 
-  const weeksArr = Object.keys(weekMap).sort().map(k => {
+  const weekKeys = Object.keys(weekMap).sort();
+  const weeksArr = weekKeys.map(k => {
     const d = weekMap[k];
     return {
       week: k,
       distance: d.distance,
       duration: d.duration,
       sessions: d.sessions,
-      avgSpeed: d.duration > 0 ? (d.distance / (d.duration / 60)) : null // km/h
+      avgSpeed: d.duration > 0 ? d.distance / (d.duration / 60) : null // km/h
     };
   });
 

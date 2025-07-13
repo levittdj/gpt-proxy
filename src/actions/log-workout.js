@@ -71,6 +71,11 @@ module.exports = async function logWorkout(params = {}) {
       case 'type':
         return workoutDetail.exercise || workoutDetail.type;
       case 'duration':
+      case 'total time':
+        return minutesToDuration(workoutDetail.duration);
+      case 'moving time':
+        return minutesToDuration(workoutDetail.duration);
+      case 'elapsed time':
         return minutesToDuration(workoutDetail.duration);
       case 'distance':
         return workoutDetail.distance;

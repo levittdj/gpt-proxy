@@ -28,12 +28,30 @@ module.exports = async function getRunTrends(weeks = 4) {
   const weekMap = {};
   workouts.forEach(w => {
     const type = (w.type || w.exercise || '').toString();
-    if (!type.toLowerCase().includes('run')) return; // skip non-run workouts
+    // Check for various running workout types
+    const isRunning = type.toLowerCase().includes('run') || 
+                     type.toLowerCase().includes('running') ||
+                     type.toLowerCase() === 'run';
+    if (!isRunning) return; // skip non-run workouts
 
-    // parse date
-    const dateVal = w.date || w['date/time'] || w.timestamp || w.date || '';
+    // parse date - handle various date formats
+    const dateVal = w.date || w['date/time'] || w.timestamp || '';
     if (!dateVal) return;
-    const dateObj = parseISO(dateVal.toString().slice(0, 10));
+    
+    let dateObj;
+    if (typeof dateVal === 'string') {
+      // Handle "7/11/2025" format
+      if (dateVal.includes('/')) {
+        const [month, day, year] = dateVal.split('/');
+        dateObj = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+      } else {
+        // Try ISO format
+        dateObj = parseISO(dateVal.toString().slice(0, 10));
+      }
+    } else {
+      dateObj = new Date(dateVal);
+    }
+    
     if (isNaN(dateObj)) return;
 
     const key = isoKey(dateObj);
@@ -44,10 +62,11 @@ module.exports = async function getRunTrends(weeks = 4) {
     const dist = parseFloat(w.distance || 0);
     if (!isNaN(dist)) entry.distance += dist; // assume km
     
-    // Parse duration from "Total Time" field (format: "0h:19m:19s")
-    const timeStr = w['total time'] || w.duration || '';
+    // Parse duration from "Total Time" field (format: "0h:19m:19s" or "0:19")
+    const timeStr = w['total time'] || w['total time'] || w.duration || '';
     let dur = 0;
     if (timeStr) {
+      // Handle "0h:19m:19s" format
       const timeMatch = timeStr.toString().match(/(\d+)h:(\d+)m:(\d+)s/);
       if (timeMatch) {
         const hours = parseInt(timeMatch[1]) || 0;
@@ -55,8 +74,16 @@ module.exports = async function getRunTrends(weeks = 4) {
         const seconds = parseInt(timeMatch[3]) || 0;
         dur = hours * 60 + minutes + seconds / 60;
       } else {
-        // Fallback: try to parse as simple number (minutes)
-        dur = parseFloat(timeStr) || 0;
+        // Handle "0:19" format (hours:minutes)
+        const simpleMatch = timeStr.toString().match(/(\d+):(\d+)/);
+        if (simpleMatch) {
+          const hours = parseInt(simpleMatch[1]) || 0;
+          const minutes = parseInt(simpleMatch[2]) || 0;
+          dur = hours * 60 + minutes;
+        } else {
+          // Fallback: try to parse as simple number (minutes)
+          dur = parseFloat(timeStr) || 0;
+        }
       }
     }
     if (dur > 0) entry.duration += dur;
