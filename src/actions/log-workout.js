@@ -105,5 +105,76 @@ module.exports = async function logWorkout(params = {}) {
 
   // Prepend the new workout at the top of the sheet (below headers)
   await gs.prependRowToSheet(gs.spreadsheetId, 'Workouts', row);
+
+  // --- New: Also log to sport-specific tab if applicable ---
+  // Map type to tab name and header function
+  const typeToTab = {
+    running: { tab: 'Running', getHeaders: gs.getWorkoutHeaders.bind(gs) },
+    cycling: { tab: 'Cycling', getHeaders: gs.getWorkoutHeaders.bind(gs) },
+    swimming: { tab: 'Swimming', getHeaders: gs.getWorkoutHeaders.bind(gs) },
+    walking: { tab: 'Walking', getHeaders: gs.getWorkoutHeaders.bind(gs) }
+    // strength excluded
+  };
+  // Normalize type
+  const typeKey = (params.type || '').toLowerCase();
+  for (const key in typeToTab) {
+    if (typeKey.includes(key)) {
+      const { tab, getHeaders } = typeToTab[key];
+      // Ensure tab exists with correct headers
+      await gs.createSheetIfNotExists(tab, getHeaders());
+      // Build row for this tab
+      const tabHeaders = await gs.readData(tab, `${tab}!1:1`).then(h => h[0] || getHeaders());
+      const tabRow = tabHeaders.map(h => {
+        const k = h.toLowerCase();
+        switch (k) {
+          case 'id':
+            return workoutDetail.id;
+          case 'date':
+            return workoutDetail.date;
+          case 'exercise':
+          case 'type':
+            return workoutDetail.exercise || workoutDetail.type;
+          case 'duration':
+          case 'total time':
+            return minutesToDuration(workoutDetail.duration);
+          case 'moving time':
+            return minutesToDuration(workoutDetail.duration);
+          case 'elapsed time':
+            return minutesToDuration(workoutDetail.duration);
+          case 'distance':
+            return workoutDetail.distance;
+          case 'calories':
+          case 'active calories':
+            return workoutDetail.calories;
+          case 'source':
+            return workoutDetail.source;
+          case 'sets':
+            return workoutDetail.sets;
+          case 'weight':
+            return workoutDetail.weight;
+          case 'reps':
+            return workoutDetail.reps;
+          case 'pace':
+            return '';
+          case 'notes':
+            return workoutDetail.notes;
+          case 'createdat':
+            return new Date().toISOString();
+          case 'updatedat':
+            return new Date().toISOString();
+          case 'setnumber':
+            return '';
+          case 'rpe':
+            return '';
+          default:
+            return '';
+        }
+      });
+      await gs.prependRowToSheet(gs.spreadsheetId, tab, tabRow);
+      break; // Only log to one sport tab
+    }
+  }
+  // --- End new logic ---
+
   return { status: 'ok', stored: workoutDetail };
 }; 
