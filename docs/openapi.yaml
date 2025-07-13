@@ -1,0 +1,262 @@
+openapi: 3.1.0
+info:
+  title: Personal Fitness Agent API
+  version: 1.0.0
+  description: API for logging and retrieving fitness data (strength sets, workouts, readiness, etc.).
+servers:
+  - url: https://gpt-proxy-danlevitt.vercel.app
+paths:
+  "/api/strength?x-vercel-protection-bypass=1CQBplG678yMDnEwGaTSEojJb2h1uUMm":
+    post:
+      summary: Log a strength-training set
+      operationId: logStrengthSet
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StrengthSet'
+      responses:
+        "200":
+          description: Successfully stored the set
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  stored:
+                    $ref: '#/components/schemas/StrengthSet'
+  "/api/trends?x-vercel-protection-bypass=1CQBplG678yMDnEwGaTSEojJb2h1uUMm":
+    get:
+      operationId: getWorkoutTrends
+      summary: Get weekly workout trends
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: weeks
+          in: query
+          description: Number of recent ISO weeks to include (default 4)
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        "200":
+          description: Weekly trend summary
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  weeks:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        week: { type: string, example: "2025-W27" }
+                        metrics:
+                          type: object
+                          additionalProperties:
+                            type: object
+                            properties:
+                              tonnage: { type: number }
+                              distance: { type: number }
+                              duration: { type: number }
+                              sessions: { type: integer }
+                  progressing:
+                    type: array
+                    items: { type: string }
+                  stalling:
+                    type: array
+                    items: { type: string }
+  "/api/workout?x-vercel-protection-bypass=1CQBplG678yMDnEwGaTSEojJb2h1uUMm":
+    post:
+      summary: Log an endurance or cross-training workout (run, bike, swim, etc.)
+      operationId: logWorkout
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Workout'
+      responses:
+        "200":
+          description: Successfully stored the workout
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  stored:
+                    $ref: '#/components/schemas/Workout'
+  "/api/run-trends?x-vercel-protection-bypass=1CQBplG678yMDnEwGaTSEojJb2h1uUMm":
+    get:
+      summary: Get weekly running trends
+      operationId: getRunTrends
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: weeks
+          in: query
+          description: Number of ISO weeks to include (default 4)
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        "200":
+          description: Weekly running trend summary
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  weeks:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        week: { type: string, example: "2025-W27" }
+                        distance: { type: number, description: "Total km" }
+                        duration: { type: number, description: "Total minutes" }
+                        sessions: { type: integer }
+                        avgPace: { type: number, nullable: true, description: "Minutes per km" }
+                  progressing:
+                    type: boolean
+  "/api/cycle-trends?x-vercel-protection-bypass=1CQBplG678yMDnEwGaTSEojJb2h1uUMm":
+    get:
+      summary: Get weekly cycling trends
+      operationId: getCycleTrends
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: weeks
+          in: query
+          description: Number of ISO weeks to include (default 4)
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        "200":
+          description: Weekly cycling trend summary
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  weeks:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        week: { type: string, example: "2025-W27" }
+                        distance: { type: number, description: "Total km" }
+                        duration: { type: number, description: "Total minutes" }
+                        sessions: { type: integer }
+                        avgSpeed: { type: number, nullable: true, description: "Km/h" }
+                  progressing:
+                    type: boolean
+  "/api/swim-trends?x-vercel-protection-bypass=1CQBplG678yMDnEwGaTSEojJb2h1uUMm":
+    get:
+      summary: Get weekly swimming trends
+      operationId: getSwimTrends
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: weeks
+          in: query
+          description: Number of ISO weeks to include (default 4)
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        "200":
+          description: Weekly swimming trend summary
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  weeks:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        week: { type: string, example: "2025-W27" }
+                        distance: { type: number, description: "Total km" }
+                        duration: { type: number, description: "Total minutes" }
+                        sessions: { type: integer }
+                        avgPace: { type: number, nullable: true, description: "Minutes per 100m" }
+                  progressing:
+                    type: boolean
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: x-api-key
+  schemas:
+    StrengthSet:
+      type: object
+      required: [exercise, weight, reps]
+      properties:
+        exercise:
+          type: string
+          description: Exercise name (e.g., "Bench Press", "Squat")
+        weight:
+          type: number
+          description: Weight in lbs
+        reps:
+          type: integer
+          description: Number of repetitions
+        date:
+          type: string
+          format: date
+          description: Date of the set (ISO format, defaults to today)
+        notes:
+          type: string
+          description: Optional notes about the set
+      example:
+        exercise: "Bench Press"
+        weight: 185
+        reps: 8
+        date: "2025-01-13"
+        notes: "Felt strong today"
+    Workout:
+      type: object
+      required: [type, duration]
+      properties:
+        type:
+          type: string
+          description: Workout type (e.g., "Running", "Cycling", "Swimming")
+        duration:
+          type: number
+          description: Duration in minutes
+        distance:
+          type: number
+          description: Distance in km (optional)
+        date:
+          type: string
+          format: date
+          description: Date of the workout (ISO format, defaults to today)
+        notes:
+          type: string
+          description: Optional notes about the workout
+      example:
+        type: "Running"
+        duration: 30
+        distance: 5.2
+        date: "2025-01-13"
+        notes: "Easy pace, felt good" 
