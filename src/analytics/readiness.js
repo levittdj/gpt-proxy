@@ -163,7 +163,29 @@ async function calculateAndStoreReadiness(dateISO) {
     0.05*subjectiveScore
   );
 
-  const readinessScore = Math.round((0.5*hrvScore)+(0.5*sleepScore));
+  // Training load component: recent workout duration over past N days
+  const loadWindowDays = parseInt(process.env.READINESS_TRAINING_LOAD_DAYS) || 7;
+  const dateObj = parseISO(dateISO);
+  const loadStartDate = subDays(dateObj, loadWindowDays);
+  // Fetch workouts in the load window
+  let recentWorkouts = [];
+  try {
+    recentWorkouts = await gs.getWorkouts(loadStartDate, dateObj);
+  } catch (e) {
+    console.warn('⚠️  Unable to read workouts for training load:', e.message);
+  }
+  const totalLoadDuration = recentWorkouts.reduce((sum, w) => sum + (parseFloat(w.duration) || 0), 0);
+  const targetLoad = loadWindowDays * 60; // target minutes (60 min per day)
+  const loadRatio = Math.min(1, totalLoadDuration / targetLoad);
+  const trainingLoadScore = Math.round(loadRatio * 100);
+  console.log('DEBUG trainingLoadScore components:', { loadWindowDays, totalLoadDuration, targetLoad, trainingLoadScore });
+
+  // Combine HRV, sleep, and training load into final readiness score
+  const readinessScore = Math.round(
+    0.45 * hrvScore +
+    0.45 * sleepScore +
+    0.10 * trainingLoadScore
+  );
 
   // Debug log for all calculated values
   console.log('DEBUG calculated values:', {
@@ -198,6 +220,8 @@ async function calculateAndStoreReadiness(dateISO) {
     sleepQuality: sleepScore,
     wakeCount: wakeCount,
     awakeMinutes: awakeMinutes,
+    trainingLoadScore: trainingLoadScore,
+    trainingLoadWindowDays: loadWindowDays,
     notes: ''
   };
   const targetId = process.env.READINESS_SPREADSHEET_ID || process.env.GOOGLE_SHEETS_SPREADSHEET_ID;
