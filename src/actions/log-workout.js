@@ -124,6 +124,14 @@ module.exports = async function logWorkout(params = {}) {
     // strength excluded
   };
   
+  // Sport variations for matching (singular and plural forms)
+  const sportVariations = {
+    running: ['run', 'running'],
+    cycling: ['bike', 'cycling', 'cycle'],
+    swimming: ['swim', 'swimming'],
+    walking: ['walk', 'walking']
+  };
+  
   // Normalize type and find matching sport
   const typeKey = (params.type || '').toLowerCase();
   console.log('🔍 Debug: workout type =', params.type, 'normalized =', typeKey);
@@ -131,15 +139,21 @@ module.exports = async function logWorkout(params = {}) {
   
   // Find matching sport tab
   let matchedSport = null;
-  for (const sportKey in typeToTab) {
-    // Check if the sport name appears anywhere in the type (case insensitive)
-    const includesCheck = typeKey.includes(sportKey);
-    console.log(`🔍 Checking "${sportKey}" in "${typeKey}": ${includesCheck}`);
-    if (includesCheck) {
-      matchedSport = sportKey;
-      console.log('✅ Matched sport:', sportKey, 'for type:', params.type);
-      break;
+  for (const sportKey in sportVariations) {
+    const variations = sportVariations[sportKey];
+    console.log(`🔍 Checking sport "${sportKey}" with variations:`, variations);
+    
+    // Check if any variation matches the type
+    for (const variation of variations) {
+      const includesCheck = typeKey.includes(variation);
+      console.log(`  🔍 Checking "${variation}" in "${typeKey}": ${includesCheck}`);
+      if (includesCheck) {
+        matchedSport = sportKey;
+        console.log('✅ Matched sport:', sportKey, 'for type:', params.type, '(matched variation:', variation, ')');
+        break;
+      }
     }
+    if (matchedSport) break; // Found a match, stop checking
   }
   
   if (matchedSport) {
