@@ -61,7 +61,7 @@ module.exports = async function getCycleTrends(weeks = 4) {
 
     entry.sessions += 1;
     const dist = parseFloat(w.distance || 0);
-    if (!isNaN(dist)) entry.distance += dist; // assume km
+    if (!isNaN(dist)) entry.distance += dist; // now stored in miles
     
     // Parse duration from "Total Time" field (format: "0h:19m:19s" or "0:19")
     const timeStr = w['total time'] || w['total time'] || w.duration || '';
@@ -98,7 +98,7 @@ module.exports = async function getCycleTrends(weeks = 4) {
       distance: d.distance,
       duration: d.duration,
       sessions: d.sessions,
-      avgSpeed: d.duration > 0 ? d.distance / (d.duration / 60) : null // km/h
+      avgSpeed: d.duration > 0 ? d.distance / (d.duration / 60) : null // mph
     };
   });
 

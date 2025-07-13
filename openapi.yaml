@@ -76,7 +76,7 @@ paths:
                     items: { type: string }
   "/api/workout?x-vercel-protection-bypass=1CQBplG678yMDnEwGaTSEojJb2h1uUMm":
     post:
-      summary: Log an endurance or cross-training workout (run, bike, swim, etc.). Return the raw API response without additional commentary.
+      summary: Log an endurance or cross-training workout (run, bike, swim, etc.)
       operationId: logWorkout
       security:
         - ApiKeyAuth: []
@@ -88,7 +88,7 @@ paths:
               $ref: '#/components/schemas/Workout'
       responses:
         "200":
-          description: Successfully stored the workout. Return this exact response without modification or additional commentary.
+          description: Successfully stored the workout
           content:
             application/json:
               schema:
@@ -127,10 +127,10 @@ paths:
                       type: object
                       properties:
                         week: { type: string, example: "2025-W27" }
-                        distance: { type: number, description: "Total km" }
+                        distance: { type: number, description: "Total miles" }
                         duration: { type: number, description: "Total minutes" }
                         sessions: { type: integer }
-                        avgPace: { type: number, nullable: true, description: "Minutes per km" }
+                        avgPace: { type: number, nullable: true, description: "Minutes per mile" }
                   progressing:
                     type: boolean
   "/api/cycle-trends?x-vercel-protection-bypass=1CQBplG678yMDnEwGaTSEojJb2h1uUMm":
@@ -161,10 +161,10 @@ paths:
                       type: object
                       properties:
                         week: { type: string, example: "2025-W27" }
-                        distance: { type: number, description: "Total km" }
+                        distance: { type: number, description: "Total miles" }
                         duration: { type: number, description: "Total minutes" }
                         sessions: { type: integer }
-                        avgSpeed: { type: number, nullable: true, description: "Km/h" }
+                        avgSpeed: { type: number, nullable: true, description: "Mph" }
                   progressing:
                     type: boolean
   "/api/swim-trends?x-vercel-protection-bypass=1CQBplG678yMDnEwGaTSEojJb2h1uUMm":
@@ -195,10 +195,10 @@ paths:
                       type: object
                       properties:
                         week: { type: string, example: "2025-W27" }
-                        distance: { type: number, description: "Total km" }
+                        distance: { type: number, description: "Total miles" }
                         duration: { type: number, description: "Total minutes" }
                         sessions: { type: integer }
-                        avgPace: { type: number, nullable: true, description: "Minutes per km" }
+                        avgPace: { type: number, nullable: true, description: "Minutes per mile" }
                   progressing:
                     type: boolean
   "/api/training-plan?x-vercel-protection-bypass=1CQBplG678yMDnEwGaTSEojJb2h1uUMm":

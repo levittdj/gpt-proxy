@@ -31,7 +31,7 @@ module.exports = async function getSwimTrends(weeks = 4) {
 
     entry.sessions += 1;
     const dist = parseFloat(w.distance || 0);
-    if (!isNaN(dist)) entry.distance += dist;
+    if (!isNaN(dist)) entry.distance += dist; // now stored in miles
     const dur = parseFloat(w.duration || 0);
     if (!isNaN(dur)) entry.duration += dur;
   });
@@ -43,7 +43,7 @@ module.exports = async function getSwimTrends(weeks = 4) {
       distance: d.distance,
       duration: d.duration,
       sessions: d.sessions,
-      avgPace: d.distance > 0 ? d.duration / d.distance : null // min per km (or 1000m)
+      avgPace: d.distance > 0 ? d.duration / d.distance : null // min per mile
     };
   });
 
