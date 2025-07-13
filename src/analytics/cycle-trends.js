@@ -96,9 +96,12 @@ module.exports = async function getCycleTrends(weeks = 4) {
     return {
       week: k,
       distance: d.distance,
+      distanceUnit: 'miles',
       duration: d.duration,
+      durationUnit: 'minutes',
       sessions: d.sessions,
-      avgSpeed: d.duration > 0 ? d.distance / (d.duration / 60) : null // mph
+      avgSpeed: d.duration > 0 ? d.distance / (d.duration / 60) : null, // mph
+      avgSpeedUnit: 'mph'
     };
   });
 

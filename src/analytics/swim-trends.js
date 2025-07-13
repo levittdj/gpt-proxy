@@ -41,9 +41,12 @@ module.exports = async function getSwimTrends(weeks = 4) {
     return {
       week: k,
       distance: d.distance,
+      distanceUnit: 'miles',
       duration: d.duration,
+      durationUnit: 'minutes',
       sessions: d.sessions,
-      avgPace: d.distance > 0 ? d.duration / d.distance : null // min per mile
+      avgPace: d.distance > 0 ? d.duration / d.distance : null, // min/mile
+      avgPaceUnit: 'minutes per mile'
     };
   });
 
