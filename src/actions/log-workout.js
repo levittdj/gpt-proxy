@@ -59,6 +59,14 @@ module.exports = async function logWorkout(params = {}) {
     return `${h}h:${String(rem).padStart(2, '0')}m:00s`;
   };
 
+  // Helper to convert kilometers to miles
+  const kmToMiles = (km) => {
+    if (!km) return '';
+    const k = parseFloat(km);
+    if (isNaN(k)) return km.toString();
+    return (k * 0.621371).toFixed(2); // Convert km to miles
+  };
+
   // Build row in header order
   const row = headers.map(h => {
     const key = h.toLowerCase();
@@ -77,8 +85,8 @@ module.exports = async function logWorkout(params = {}) {
         return minutesToDuration(workoutDetail.duration);
       case 'elapsed time':
         return minutesToDuration(workoutDetail.duration);
-      case 'distance':
-        return workoutDetail.distance;
+              case 'distance':
+          return kmToMiles(workoutDetail.distance);
       case 'calories':
       case 'active calories':
         return workoutDetail.calories;
@@ -119,12 +127,15 @@ module.exports = async function logWorkout(params = {}) {
   // Normalize type and find matching sport
   const typeKey = (params.type || '').toLowerCase();
   console.log('🔍 Debug: workout type =', params.type, 'normalized =', typeKey);
+  console.log('🔍 Available sport keys:', Object.keys(typeToTab));
   
   // Find matching sport tab
   let matchedSport = null;
   for (const sportKey in typeToTab) {
     // Check if the sport name appears anywhere in the type (case insensitive)
-    if (typeKey.includes(sportKey)) {
+    const includesCheck = typeKey.includes(sportKey);
+    console.log(`🔍 Checking "${sportKey}" in "${typeKey}": ${includesCheck}`);
+    if (includesCheck) {
       matchedSport = sportKey;
       console.log('✅ Matched sport:', sportKey, 'for type:', params.type);
       break;
@@ -158,7 +169,7 @@ module.exports = async function logWorkout(params = {}) {
         case 'elapsed time':
           return minutesToDuration(workoutDetail.duration);
         case 'distance':
-          return workoutDetail.distance;
+          return kmToMiles(workoutDetail.distance);
         case 'calories':
         case 'active calories':
           return workoutDetail.calories;
