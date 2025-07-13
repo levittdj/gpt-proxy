@@ -4,7 +4,7 @@ info:
   version: 1.0.0
   description: API for logging and retrieving fitness data (strength sets, workouts, readiness, etc.).
 servers:
-  - url: https://gpt-proxy-ugmhyu4zb-dans-projects-19e6c8d0.vercel.app
+  - url: https://gpt-proxy-dtgbsyrlg-dans-projects-19e6c8d0.vercel.app
 paths:
   "/api/strength?x-vercel-protection-bypass=1CQBplG678yMDnEwGaTSEojJb2h1uUMm":
     post:
