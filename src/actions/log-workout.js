@@ -103,6 +103,7 @@ module.exports = async function logWorkout(params = {}) {
     }
   });
 
-  await gs.appendData('Workouts', [row]);
+  // Prepend the new workout at the top of the sheet (below headers)
+  await gs.prependRowToSheet(gs.spreadsheetId, 'Workouts', row);
   return { status: 'ok', stored: workoutDetail };
 }; 

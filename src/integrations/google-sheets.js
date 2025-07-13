@@ -508,7 +508,7 @@ class GoogleSheetsIntegration {
    */
   async storeStrengthSet(setDetail) {
     const dateString = setDetail.date instanceof Date ? setDetail.date.toISOString().slice(0, 10) : setDetail.date;
-    const data = [[
+    const data = [
       dateString,
       setDetail.exercise,
       setDetail.setNumber || '',
@@ -517,9 +517,10 @@ class GoogleSheetsIntegration {
       setDetail.rpe || '',
       setDetail.notes || '',
       new Date().toISOString()
-    ]];
+    ];
 
-    return await this.appendData('Strength', data);
+    // Prepend the strength set at the top of the sheet (below headers)
+    return await this.prependRowToSheet(this.spreadsheetId, 'Strength', data);
   }
 
   /**
